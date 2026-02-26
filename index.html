@@ -3,207 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expedition 33 | Deep Space Archive</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <title>1000xRESIST | Fan Site</title>
     <style>
+        /* Estilos Gerais e Cores do Jogo */
         :root {
-            --accent: #00d4ff;
-            --bg: #05070a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
+            --primary-red: #e62229;
+            --bg-black: #0a0a0a;
+            --text-white: #f4f4f4;
+            --accent-gray: #2a2a2a;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            line-height: 1.6;
         }
 
-        /* Background com imagem da Terra/Espaço */
+        /* Header e Navegação */
+        header {
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 1rem 5%;
+            border-bottom: 3px solid var(--primary-red);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--primary-red);
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--primary-red);
+        }
+
+        /* Hero Section */
         .hero {
-            height: 100vh;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg)), 
-                        url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
+            height: 60vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 20px;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.squarespace-cdn.com/content/v1/6171803a60a92d1921f0f67a/7d36a8e3-05f4-4e4b-84a1-0f7f3f3f5e5a/1000xRESIST_KeyArt_Horizontal.jpg');
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid var(--accent-gray);
         }
 
         .hero h1 {
-            font-family: 'Orbitron', sans-serif;
             font-size: 4rem;
-            letter-spacing: 8px;
+            margin: 0;
             text-transform: uppercase;
-            margin-bottom: 10px;
-            background: linear-gradient(to right, #fff, var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-style: italic;
         }
 
-        .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; }
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-top: 10px;
+        }
 
+        /* Conteúdo Principal */
         .container {
-            max-width: 1100px;
-            margin: -100px auto 50px;
-            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
 
-        /* Glassmorphism Cards */
-        section {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-        }
-
-        h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
+        .section-title {
+            color: var(--primary-red);
+            border-left: 5px solid var(--primary-red);
+            padding-left: 15px;
+            text-transform: uppercase;
             margin-bottom: 30px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 15px;
         }
 
-        h2::after {
-            content: "";
-            height: 1px;
-            flex-grow: 1;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Grid de Tripulação Moderno */
-        .grid-crew {
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
         }
 
-        .crew-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s ease, border 0.3s ease;
-            border: 1px solid transparent;
+        .card {
+            background: var(--accent-gray);
+            padding: 20px;
+            border-radius: 4px;
+            transition: transform 0.3s;
         }
 
-        .crew-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.07);
+        .card:hover {
+            transform: translateY(-5px);
+            border: 1px solid var(--primary-red);
         }
 
-        .crew-img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            filter: grayscale(40%);
-            transition: 0.3s;
-        }
-
-        .crew-card:hover .crew-img { filter: grayscale(0%); }
-
-        .crew-info { padding: 20px; }
-        .crew-info h3 { font-size: 1.4rem; margin-bottom: 5px; }
-        .crew-info p { color: var(--accent); font-size: 0.9rem; font-weight: bold; }
-
-        /* Estatísticas */
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-            text-align: center;
-        }
-
-        .stat-item h4 { font-size: 2.5rem; color: #fff; }
-        .stat-item span { color: var(--accent); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; }
-
+        /* Rodapé */
         footer {
             text-align: center;
-            padding: 60px 20px;
-            color: #555;
-            font-size: 0.9rem;
+            padding: 40px;
+            background: #000;
+            font-size: 0.8rem;
+            color: #666;
+            border-top: 1px solid var(--accent-gray);
         }
 
+        /* Responsividade */
         @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
             .hero h1 { font-size: 2.5rem; }
-            .container { margin-top: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="hero">
-        <h1>EXPEDITION 33</h1>
-        <p>A fronteira final da ciência e cooperação internacional na Estação Espacial Internacional.</p>
-    </div>
+    <header>
+        <div class="logo">1000xRESIST</div>
+        <nav>
+            <a href="#sobre">Sobre</a>
+            <a href="#historia">História</a>
+            <a href="#plataformas">Plataformas</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>RESISTIR É LEMBRAR</h1>
+        <p>Um thriller de ficção científica cinematográfico onde você revive as memórias de um deus.</p>
+    </section>
 
     <div class="container">
-        <section>
-            <h2>Sobre a Missão</h2>
-            <p>A Expedição 33 marcou um capítulo vital na exploração humana. Comandada por Sunita Williams, a missão focou em pesquisas de microgravidade e na manutenção crítica dos sistemas da ISS, servindo como ponte para futuras viagens a Marte.</p>
-        </section>
-
-        <section id="crew">
-            <h2>Tripulação Principal</h2>
-            <div class="grid-crew">
-                <div class="crew-card">
-                    <img src="https://www.nasa.gov/wp-content/uploads/2023/04/685511main_williams_full.jpg" alt="Sunita Williams" class="crew-img">
-                    <div class="crew-info">
-                        <h3>Sunita Williams</h3>
-                        <p>Comandante - NASA</p>
-                    </div>
+        
+        <section id="sobre">
+            <h2 class="section-title">O Jogo</h2>
+            <div class="grid">
+                <div>
+                    <p><strong>1000xRESIST</strong> é uma aventura narrativa surrealista desenvolvida pela sunset visitor 🖲️. O jogo mistura exploração em terceira pessoa com visual novel e elementos de teatro experimental.</p>
+                    <p>Você joga como Watcher (Observadora), uma das muitas clones em uma sociedade subterrânea que idolatra a "Allmother", a última sobrevivente humana de uma praga alienígena.</p>
                 </div>
-                <div class="crew-card">
-                    <img src="https://www.nasa.gov/wp-content/uploads/2015/05/yuri_malenchenko.jpg" alt="Yuri Malenchenko" class="crew-img">
-                    <div class="crew-info">
-                        <h3>Yuri Malenchenko</h3>
-                        <p>Engenheiro de Voo - ROSCOSMOS</p>
-                    </div>
-                </div>
-                <div class="crew-card">
-                    <img src="https://www.nasa.gov/wp-content/uploads/2015/05/akihiko_hoshide.jpg" alt="Akihiko Hoshide" class="crew-img">
-                    <div class="crew-info">
-                        <h3>Akihiko Hoshide</h3>
-                        <p>Engenheiro de Voo - JAXA</p>
-                    </div>
+                <div class="card">
+                    <h3>Destaques</h3>
+                    <ul>
+                        <li>Narrativa profunda e emocional</li>
+                        <li>Estilo visual único de alto contraste</li>
+                        <li>Dublagem completa de alta qualidade</li>
+                        <li>Múltiplas linhas temporais</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <section>
-            <h2>Métricas da Jornada</h2>
-            <div class="stats">
-                <div class="stat-item">
-                    <h4>63</h4>
-                    <span>Dias no Espaço</span>
-                </div>
-                <div class="stat-item">
-                    <h4>1000+</h4>
-                    <span>Órbitas na Terra</span>
-                </div>
-                <div class="stat-item">
-                    <h4>03</h4>
-                    <span>Nações Unidas</span>
-                </div>
-            </div>
+        <hr style="border-color: #333; margin: 50px 0;">
+
+        <section id="historia">
+            <h2 class="section-title">A Trama</h2>
+            <p>Mil anos no futuro, a humanidade foi extinta por uma ocupação alienígena e uma doença mortal. Os únicos sobreviventes são clones de uma adolescente chamada Iris. Você deve mergulhar nas memórias de Iris para descobrir a verdade por trás da criação da sua sociedade e os pecados do passado.</p>
         </section>
+
     </div>
 
     <footer>
-        <p>Dados fornecidos via arquivos históricos da NASA &copy; 2026</p>
+        <p>&copy; 2024 - Criado por um fã de 1000xResist. Todos os direitos reservados à sunset visitor.</p>
     </footer>
 
 </body>
