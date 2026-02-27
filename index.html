@@ -2,157 +2,174 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Ping Pong JS - Equilibrado</title>
+    <title>Arena PvP - JS</title>
     <style>
         body {
-            background-color: #222;
+            background-color: #1a1a1a;
+            color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            color: white;
-            font-family: Arial, sans-serif;
+            overflow: hidden;
         }
         canvas {
-            border: 5px solid #fff;
-            background-color: #000;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            background-color: #333;
+            border: 4px solid #555;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        .controls {
-            margin-top: 15px;
+        .ui {
             display: flex;
-            gap: 50px;
-            text-align: center;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 10px;
+            padding-top: 20px;
+        }
+        .health-bar {
+            width: 300px;
+            height: 20px;
+            background-color: #550000;
+            border: 2px solid #fff;
+            position: relative;
+        }
+        .health-fill {
+            height: 100%;
+            background-color: #ff4d4d;
+            width: 100%;
+            transition: width 0.2s;
+        }
+        .controls-info {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
 
-    <h2>Ping Pong - Equilibrado</h2>
-    <canvas id="pong" width="800" height="400"></canvas>
-    
-    <div class="controls">
-        <div>Esquerda: <b>W / S</b></div>
-        <div>Direita: <b>↑ / ↓</b></div>
+    <div class="ui">
+        <div>
+            <span>P1 (Azul)</span>
+            <div class="health-bar"><div id="hp1" class="health-fill"></div></div>
+        </div>
+        <div>
+            <span>P2 (Vermelho)</span>
+            <div class="health-bar"><div id="hp2" class="health-fill"></div></div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <div class="controls-info">
+        P1: WASD + 'C' para Atacar | P2: Setas + 'Espaço' para Atacar
     </div>
 
 <script>
-    const canvas = document.getElementById("pong");
+    const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Configurações Físicas
-    const INITIAL_SPEED = 4;      // Velocidade ao reiniciar
-    const MAX_SPEED = 14;         // Limite de velocidade máxima
-    const SPEED_INCREMENT = 1.1;  // Multiplicador de velocidade por batida
-
-    // Jogadores
-    const paddleWidth = 10, paddleHeight = 80;
-    let leftPaddleY = (canvas.height - paddleHeight) / 2;
-    let rightPaddleY = (canvas.height - paddleHeight) / 2;
-    const paddleSpeed = 8;
-
-    // Bola
-    let ballX = canvas.width / 2, ballY = canvas.height / 2;
-    let ballSize = 10;
-    let ballSpeedX = INITIAL_SPEED;
-    let ballSpeedY = INITIAL_SPEED;
-
-    // Placar
-    let scoreLeft = 0, scoreRight = 0;
-
-    // Teclado
     const keys = {};
     document.addEventListener("keydown", e => keys[e.code] = true);
     document.addEventListener("keyup", e => keys[e.code] = false);
 
-    // Função de Reinício Sugerida: vai para o lado que tomou o ponto e devagar
-    function resetBall(winner) {
-        ballX = canvas.width / 2;
-        ballY = canvas.height / 2;
-        
-        // Se a Direita ganhou o ponto, a bola vai para a Esquerda (lado que sofreu o ponto)
-        // Se a Esquerda ganhou, a bola vai para a Direita.
-        ballSpeedX = (winner === "left") ? INITIAL_SPEED : -INITIAL_SPEED;
-        
-        // Direção vertical aleatória para não ser sempre igual
-        ballSpeedY = (Math.random() > 0.5 ? 1 : -1) * INITIAL_SPEED;
-    }
-
-    function update() {
-        // Movimento Raquetes
-        if (keys["KeyW"] && leftPaddleY > 0) leftPaddleY -= paddleSpeed;
-        if (keys["KeyS"] && leftPaddleY < canvas.height - paddleHeight) leftPaddleY += paddleSpeed;
-        if (keys["ArrowUp"] && rightPaddleY > 0) rightPaddleY -= paddleSpeed;
-        if (keys["ArrowDown"] && rightPaddleY < canvas.height - paddleHeight) rightPaddleY += paddleSpeed;
-
-        // Movimento Bola
-        ballX += ballSpeedX;
-        ballY += ballSpeedY;
-
-        // Colisão Teto/Chão
-        if (ballY <= 0 || ballY + ballSize >= canvas.height) {
-            ballSpeedY *= -1;
+    class Player {
+        constructor(x, y, color, controls) {
+            this.x = x;
+            this.y = y;
+            this.size = 40;
+            this.color = color;
+            this.controls = controls;
+            this.hp = 100;
+            this.speed = 5;
+            this.isAttacking = false;
+            this.attackTimer = 0;
         }
 
-        // Colisão Raquete Esquerda
-        if (ballX <= paddleWidth + 5 && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) {
-            // Inverte e aumenta velocidade se não atingiu o limite
-            if (Math.abs(ballSpeedX) < MAX_SPEED) ballSpeedX *= SPEED_INCREMENT;
-            ballSpeedX = Math.abs(ballSpeedX); // Garante que vá para a direita
+        draw() {
+            // Desenha o corpo
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+
+            // Desenha efeito de ataque
+            if (this.isAttacking) {
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x - 5, this.y - 5, this.size + 10, this.size + 10);
+            }
         }
 
-        // Colisão Raquete Direita
-        if (ballX >= canvas.width - paddleWidth - 15 && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight) {
-            if (Math.abs(ballSpeedX) < MAX_SPEED) ballSpeedX *= SPEED_INCREMENT;
-            ballSpeedX = -Math.abs(ballSpeedX); // Garante que vá para a esquerda
-        }
+        update() {
+            // Movimentação
+            if (keys[this.controls.up] && this.y > 0) this.y -= this.speed;
+            if (keys[this.controls.down] && this.y < canvas.height - this.size) this.y += this.speed;
+            if (keys[this.controls.left] && this.x > 0) this.x -= this.speed;
+            if (keys[this.controls.right] && this.x < canvas.width - this.size) this.x += this.speed;
 
-        // Pontuação
-        if (ballX < 0) {
-            scoreRight++;
-            resetBall("right"); // Esquerda sofreu o ponto, bola vai para a esquerda
-        } else if (ballX > canvas.width) {
-            scoreLeft++;
-            resetBall("left"); // Direita sofreu o ponto, bola vai para a direita
+            // Lógica de Ataque (Cooldown simples)
+            if (keys[this.controls.attack] && !this.isAttacking) {
+                this.isAttacking = true;
+                this.attackTimer = 15; // duração do frame de ataque
+            }
+
+            if (this.attackTimer > 0) {
+                this.attackTimer--;
+            } else {
+                this.isAttacking = false;
+            }
         }
     }
 
-    function draw() {
-        // Fundo
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const p1 = new Player(100, 180, "#3498db", {
+        up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD", attack: "KeyC"
+    });
 
-        // Rede
-        ctx.strokeStyle = "#444";
-        ctx.setLineDash([10, 10]);
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
-        ctx.stroke();
+    const p2 = new Player(660, 180, "#e74c3c", {
+        up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", attack: "Space"
+    });
 
-        // Raquetes
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(5, leftPaddleY, paddleWidth, paddleHeight);
-        ctx.fillRect(canvas.width - paddleWidth - 5, rightPaddleY, paddleWidth, paddleHeight);
-
-        // Bola
-        ctx.fillRect(ballX, ballY, ballSize, ballSize);
-
-        // Placar
-        ctx.font = "bold 40px Arial";
-        ctx.fillText(scoreLeft, canvas.width / 4, 60);
-        ctx.fillText(scoreRight, 3 * canvas.width / 4, 60);
+    function checkCollision(attacker, defender, hpElement) {
+        if (attacker.isAttacking) {
+            // Verifica se os quadrados se sobrepõem
+            if (attacker.x < defender.x + defender.size &&
+                attacker.x + attacker.size > defender.x &&
+                attacker.y < defender.y + defender.size &&
+                attacker.y + attacker.size > defender.y) {
+                
+                defender.hp -= 1; // Tira vida por frame de contato
+                hpElement.style.width = defender.hp + "%";
+                
+                // Empurrão (Knockback)
+                if (attacker.x < defender.x) defender.x += 10; else defender.x -= 10;
+            }
+        }
     }
 
-    function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (p1.hp > 0 && p2.hp > 0) {
+            p1.update();
+            p2.update();
+
+            checkCollision(p1, p2, document.getElementById("hp2"));
+            checkCollision(p2, p1, document.getElementById("hp1"));
+
+            p1.draw();
+            p2.draw();
+
+            requestAnimationFrame(loop);
+        } else {
+            ctx.fillStyle = "white";
+            ctx.font = "40px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("FIM DE JOGO!", canvas.width / 2, canvas.height / 2);
+            ctx.font = "20px Arial";
+            ctx.fillText("Pressione F5 para reiniciar", canvas.width / 2, canvas.height / 2 + 40);
+        }
     }
 
-    gameLoop();
+    loop();
 </script>
 </body>
 </html>
