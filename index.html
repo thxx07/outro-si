@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Ping Pong JS</title>
+    <title>Ping Pong JS - Equilibrado</title>
     <style>
         body {
             background-color: #222;
@@ -24,111 +24,126 @@
             margin-top: 15px;
             display: flex;
             gap: 50px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <h2>Ping Pong - 2 Jogadores</h2>
+    <h2>Ping Pong - Equilibrado</h2>
     <canvas id="pong" width="800" height="400"></canvas>
     
     <div class="controls">
-        <p>Esquerda: <b>W / S</b></p>
-        <p>Direita: <b>↑ / ↓</b></p>
+        <div>Esquerda: <b>W / S</b></div>
+        <div>Direita: <b>↑ / ↓</b></div>
     </div>
 
 <script>
     const canvas = document.getElementById("pong");
     const ctx = canvas.getContext("2d");
 
-    // Configurações dos Jogadores
+    // Configurações Físicas
+    const INITIAL_SPEED = 4;      // Velocidade ao reiniciar
+    const MAX_SPEED = 14;         // Limite de velocidade máxima
+    const SPEED_INCREMENT = 1.1;  // Multiplicador de velocidade por batida
+
+    // Jogadores
     const paddleWidth = 10, paddleHeight = 80;
     let leftPaddleY = (canvas.height - paddleHeight) / 2;
     let rightPaddleY = (canvas.height - paddleHeight) / 2;
-    const paddleSpeed = 7;
+    const paddleSpeed = 8;
 
-    // Configurações da Bola
+    // Bola
     let ballX = canvas.width / 2, ballY = canvas.height / 2;
-    let ballSize = 8;
-    let ballSpeedX = 5, ballSpeedY = 5;
+    let ballSize = 10;
+    let ballSpeedX = INITIAL_SPEED;
+    let ballSpeedY = INITIAL_SPEED;
 
     // Placar
     let scoreLeft = 0, scoreRight = 0;
 
-    // Controle de Teclas
+    // Teclado
     const keys = {};
     document.addEventListener("keydown", e => keys[e.code] = true);
     document.addEventListener("keyup", e => keys[e.code] = false);
 
-    function resetBall() {
+    // Função de Reinício Sugerida: vai para o lado que tomou o ponto e devagar
+    function resetBall(winner) {
         ballX = canvas.width / 2;
         ballY = canvas.height / 2;
-        ballSpeedX = -ballSpeedX; // Inverte a direção
+        
+        // Se a Direita ganhou o ponto, a bola vai para a Esquerda (lado que sofreu o ponto)
+        // Se a Esquerda ganhou, a bola vai para a Direita.
+        ballSpeedX = (winner === "left") ? INITIAL_SPEED : -INITIAL_SPEED;
+        
+        // Direção vertical aleatória para não ser sempre igual
+        ballSpeedY = (Math.random() > 0.5 ? 1 : -1) * INITIAL_SPEED;
     }
 
     function update() {
-        // Movimento Jogador Esquerda (W e S)
+        // Movimento Raquetes
         if (keys["KeyW"] && leftPaddleY > 0) leftPaddleY -= paddleSpeed;
         if (keys["KeyS"] && leftPaddleY < canvas.height - paddleHeight) leftPaddleY += paddleSpeed;
-
-        // Movimento Jogador Direita (Setas)
         if (keys["ArrowUp"] && rightPaddleY > 0) rightPaddleY -= paddleSpeed;
         if (keys["ArrowDown"] && rightPaddleY < canvas.height - paddleHeight) rightPaddleY += paddleSpeed;
 
-        // Movimento da Bola
+        // Movimento Bola
         ballX += ballSpeedX;
         ballY += ballSpeedY;
 
-        // Colisão com teto e chão
+        // Colisão Teto/Chão
         if (ballY <= 0 || ballY + ballSize >= canvas.height) {
             ballSpeedY *= -1;
         }
 
-        // Colisão com Raquete Esquerda
+        // Colisão Raquete Esquerda
         if (ballX <= paddleWidth + 5 && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) {
-            ballSpeedX *= -1.1; // Aumenta velocidade gradualmente
+            // Inverte e aumenta velocidade se não atingiu o limite
+            if (Math.abs(ballSpeedX) < MAX_SPEED) ballSpeedX *= SPEED_INCREMENT;
+            ballSpeedX = Math.abs(ballSpeedX); // Garante que vá para a direita
         }
 
-        // Colisão com Raquete Direita
+        // Colisão Raquete Direita
         if (ballX >= canvas.width - paddleWidth - 15 && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight) {
-            ballSpeedX *= -1.1;
+            if (Math.abs(ballSpeedX) < MAX_SPEED) ballSpeedX *= SPEED_INCREMENT;
+            ballSpeedX = -Math.abs(ballSpeedX); // Garante que vá para a esquerda
         }
 
         // Pontuação
         if (ballX < 0) {
             scoreRight++;
-            resetBall();
+            resetBall("right"); // Esquerda sofreu o ponto, bola vai para a esquerda
         } else if (ballX > canvas.width) {
             scoreLeft++;
-            resetBall();
+            resetBall("left"); // Direita sofreu o ponto, bola vai para a direita
         }
     }
 
     function draw() {
-        // Limpar tela
+        // Fundo
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Linha central
-        ctx.strokeStyle = "#fff";
+        // Rede
+        ctx.strokeStyle = "#444";
         ctx.setLineDash([10, 10]);
         ctx.beginPath();
         ctx.moveTo(canvas.width / 2, 0);
         ctx.lineTo(canvas.width / 2, canvas.height);
         ctx.stroke();
 
-        // Desenhar Raquetes
+        // Raquetes
         ctx.fillStyle = "#fff";
-        ctx.fillRect(5, leftPaddleY, paddleWidth, paddleHeight); // Esquerda
-        ctx.fillRect(canvas.width - paddleWidth - 5, rightPaddleY, paddleWidth, paddleHeight); // Direita
+        ctx.fillRect(5, leftPaddleY, paddleWidth, paddleHeight);
+        ctx.fillRect(canvas.width - paddleWidth - 5, rightPaddleY, paddleWidth, paddleHeight);
 
-        // Desenhar Bola
+        // Bola
         ctx.fillRect(ballX, ballY, ballSize, ballSize);
 
-        // Desenhar Placar
-        ctx.font = "30px Arial";
-        ctx.fillText(scoreLeft, canvas.width / 4, 50);
-        ctx.fillText(scoreRight, 3 * canvas.width / 4, 50);
+        // Placar
+        ctx.font = "bold 40px Arial";
+        ctx.fillText(scoreLeft, canvas.width / 4, 60);
+        ctx.fillText(scoreRight, 3 * canvas.width / 4, 60);
     }
 
     function gameLoop() {
