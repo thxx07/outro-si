@@ -2,144 +2,142 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dino Game - Clone</title>
+    <title>Ping Pong JS</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            background-color: #222;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
-            background-color: #f7f7f7;
-            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
         }
-
-        #game-container {
-            width: 600px;
-            height: 200px;
-            border-bottom: 2px solid #535353;
-            background-color: white;
-            position: relative;
-            overflow: hidden;
+        canvas {
+            border: 5px solid #fff;
+            background-color: #000;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
-
-        #dino {
-            width: 40px;
-            height: 40px;
-            background-color: #535353;
-            position: absolute;
-            bottom: 0;
-            left: 50px;
-        }
-
-        .cactus {
-            width: 20px;
-            height: 40px;
-            background-color: #ff4d4d;
-            position: absolute;
-            bottom: 0;
-            right: -20px;
-        }
-
-        #score {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            color: #535353;
-            font-size: 20px;
-        }
-
-        .animate-jump {
-            animation: jump 0.5s linear;
-        }
-
-        @keyframes jump {
-            0% { bottom: 0; }
-            30% { bottom: 100px; }
-            70% { bottom: 100px; }
-            100% { bottom: 0; }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 50px;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="score">0</div>
-        <div id="dino"></div>
+    <h2>Ping Pong - 2 Jogadores</h2>
+    <canvas id="pong" width="800" height="400"></canvas>
+    
+    <div class="controls">
+        <p>Esquerda: <b>W / S</b></p>
+        <p>Direita: <b>↑ / ↓</b></p>
     </div>
 
-    <script>
-        const dino = document.getElementById("dino");
-        const container = document.getElementById("game-container");
-        const scoreElement = document.getElementById("score");
-        let score = 0;
-        let isGameOver = false;
+<script>
+    const canvas = document.getElementById("pong");
+    const ctx = canvas.getContext("2d");
 
-        // Função para o Dino pular
-        function jump() {
-            if (!dino.classList.contains("animate-jump")) {
-                dino.classList.add("animate-jump");
-                setTimeout(() => {
-                    dino.classList.remove("animate-jump");
-                }, 500);
-            }
+    // Configurações dos Jogadores
+    const paddleWidth = 10, paddleHeight = 80;
+    let leftPaddleY = (canvas.height - paddleHeight) / 2;
+    let rightPaddleY = (canvas.height - paddleHeight) / 2;
+    const paddleSpeed = 7;
+
+    // Configurações da Bola
+    let ballX = canvas.width / 2, ballY = canvas.height / 2;
+    let ballSize = 8;
+    let ballSpeedX = 5, ballSpeedY = 5;
+
+    // Placar
+    let scoreLeft = 0, scoreRight = 0;
+
+    // Controle de Teclas
+    const keys = {};
+    document.addEventListener("keydown", e => keys[e.code] = true);
+    document.addEventListener("keyup", e => keys[e.code] = false);
+
+    function resetBall() {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = -ballSpeedX; // Inverte a direção
+    }
+
+    function update() {
+        // Movimento Jogador Esquerda (W e S)
+        if (keys["KeyW"] && leftPaddleY > 0) leftPaddleY -= paddleSpeed;
+        if (keys["KeyS"] && leftPaddleY < canvas.height - paddleHeight) leftPaddleY += paddleSpeed;
+
+        // Movimento Jogador Direita (Setas)
+        if (keys["ArrowUp"] && rightPaddleY > 0) rightPaddleY -= paddleSpeed;
+        if (keys["ArrowDown"] && rightPaddleY < canvas.height - paddleHeight) rightPaddleY += paddleSpeed;
+
+        // Movimento da Bola
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+        // Colisão com teto e chão
+        if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+            ballSpeedY *= -1;
         }
 
-        // Listener para tecla Espaço ou clique
-        document.addEventListener("keydown", (e) => {
-            if (e.code === "Space") jump();
-        });
-
-        // Criar cactos aleatórios
-        function createCactus() {
-            if (isGameOver) return;
-
-            const cactus = document.createElement("div");
-            cactus.classList.add("cactus");
-            container.appendChild(cactus);
-
-            let cactusPos = 600;
-            
-            let moveInterval = setInterval(() => {
-                if (isGameOver) {
-                    clearInterval(moveInterval);
-                    return;
-                }
-
-                cactusPos -= 5;
-                cactus.style.left = cactusPos + "px";
-
-                // Detecção de Colisão
-                let dinoBottom = parseInt(window.getComputedStyle(dino).getPropertyValue("bottom"));
-                
-                if (cactusPos > 50 && cactusPos < 90 && dinoBottom <= 40) {
-                    gameOver();
-                    clearInterval(moveInterval);
-                }
-
-                // Remove cacto quando sai da tela e soma pontuação
-                if (cactusPos < -20) {
-                    clearInterval(moveInterval);
-                    container.removeChild(cactus);
-                    score++;
-                    scoreElement.innerText = score;
-                }
-            }, 20);
-
-            // Gera o próximo cacto em tempo aleatório
-            let randomTime = Math.random() * (2000 - 700) + 700;
-            setTimeout(createCactus, randomTime);
+        // Colisão com Raquete Esquerda
+        if (ballX <= paddleWidth + 5 && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) {
+            ballSpeedX *= -1.1; // Aumenta velocidade gradualmente
         }
 
-        function gameOver() {
-            isGameOver = true;
-            alert("Game Over! Pontuação: " + score);
-            location.reload(); // Recarrega a página para reiniciar
+        // Colisão com Raquete Direita
+        if (ballX >= canvas.width - paddleWidth - 15 && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight) {
+            ballSpeedX *= -1.1;
         }
 
-        createCactus();
-    </script>
+        // Pontuação
+        if (ballX < 0) {
+            scoreRight++;
+            resetBall();
+        } else if (ballX > canvas.width) {
+            scoreLeft++;
+            resetBall();
+        }
+    }
+
+    function draw() {
+        // Limpar tela
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Linha central
+        ctx.strokeStyle = "#fff";
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+
+        // Desenhar Raquetes
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(5, leftPaddleY, paddleWidth, paddleHeight); // Esquerda
+        ctx.fillRect(canvas.width - paddleWidth - 5, rightPaddleY, paddleWidth, paddleHeight); // Direita
+
+        // Desenhar Bola
+        ctx.fillRect(ballX, ballY, ballSize, ballSize);
+
+        // Desenhar Placar
+        ctx.font = "30px Arial";
+        ctx.fillText(scoreLeft, canvas.width / 4, 50);
+        ctx.fillText(scoreRight, 3 * canvas.width / 4, 50);
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+</script>
 </body>
 </html>
