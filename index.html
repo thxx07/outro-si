@@ -2,174 +2,136 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Arena PvP - JS</title>
+    <title>Arena PvP - Armas e Combate</title>
     <style>
-        body {
-            background-color: #1a1a1a;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            background-color: #333;
-            border: 4px solid #555;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .ui {
-            display: flex;
-            justify-content: space-between;
-            width: 800px;
-            margin-bottom: 10px;
-            padding-top: 20px;
-        }
-        .health-bar {
-            width: 300px;
-            height: 20px;
-            background-color: #550000;
-            border: 2px solid #fff;
-            position: relative;
-        }
-        .health-fill {
-            height: 100%;
-            background-color: #ff4d4d;
-            width: 100%;
-            transition: width 0.2s;
-        }
-        .controls-info {
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: #aaa;
-        }
+        body { background-color: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; margin: 0; overflow: hidden; }
+        canvas { background-color: #252525; border: 4px solid #444; margin-top: 10px; }
+        .ui { display: flex; justify-content: space-between; width: 800px; margin-top: 20px; }
+        .health-bar { width: 300px; height: 20px; background-color: #444; border: 2px solid #fff; }
+        .hp-fill { height: 100%; background-color: #ff4d4d; width: 100%; transition: width 0.1s; }
+        .status { font-size: 12px; margin-top: 5px; color: #aaa; }
     </style>
 </head>
 <body>
 
     <div class="ui">
         <div>
-            <span>P1 (Azul)</span>
-            <div class="health-bar"><div id="hp1" class="health-fill"></div></div>
+            <strong>P1 (Azul)</strong>
+            <div class="health-bar"><div id="hp1" class="hp-fill"></div></div>
+            <div id="stat1" class="status">Dano: 5</div>
         </div>
         <div>
-            <span>P2 (Vermelho)</span>
-            <div class="health-bar"><div id="hp2" class="health-fill"></div></div>
+            <strong>P2 (Vermelho)</strong>
+            <div class="health-bar"><div id="hp2" class="hp-fill"></div></div>
+            <div id="stat2" class="status">Dano: 5</div>
         </div>
     </div>
 
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-
-    <div class="controls-info">
-        P1: WASD + 'C' para Atacar | P2: Setas + 'Espaço' para Atacar
-    </div>
+    <canvas id="game" width="800" height="400"></canvas>
 
 <script>
-    const canvas = document.getElementById("gameCanvas");
+    const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
     const keys = {};
     document.addEventListener("keydown", e => keys[e.code] = true);
     document.addEventListener("keyup", e => keys[e.code] = false);
 
+    let weapons = [];
+
     class Player {
-        constructor(x, y, color, controls) {
+        constructor(x, y, color, controls, id) {
+            this.id = id;
             this.x = x;
             this.y = y;
             this.size = 40;
             this.color = color;
             this.controls = controls;
             this.hp = 100;
+            this.baseDamage = 5;
+            this.bonusDamage = 0;
             this.speed = 5;
+            
+            // Estados de Ataque
             this.isAttacking = false;
-            this.attackTimer = 0;
+            this.canAttack = true;
+            this.attackOffset = 0; // Para animação de estocada
         }
 
         draw() {
-            // Desenha o corpo
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.size, this.size);
-
-            // Desenha efeito de ataque
+            ctx.save();
+            // Efeito de sombra no ataque
             if (this.isAttacking) {
-                ctx.strokeStyle = "white";
-                ctx.lineWidth = 3;
-                ctx.strokeRect(this.x - 5, this.y - 5, this.size + 10, this.size + 10);
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "white";
+                ctx.fillStyle = "#fff"; // Brilha no ataque
+            } else {
+                ctx.fillStyle = this.color;
             }
+
+            // Desenha o quadrado com o offset da animação
+            ctx.fillRect(this.x + this.attackOffset, this.y, this.size, this.size);
+            ctx.restore();
         }
 
         update() {
-            // Movimentação
+            if (this.hp <= 0) return;
+
+            // Movimento
             if (keys[this.controls.up] && this.y > 0) this.y -= this.speed;
             if (keys[this.controls.down] && this.y < canvas.height - this.size) this.y += this.speed;
             if (keys[this.controls.left] && this.x > 0) this.x -= this.speed;
             if (keys[this.controls.right] && this.x < canvas.width - this.size) this.x += this.speed;
 
-            // Lógica de Ataque (Cooldown simples)
-            if (keys[this.controls.attack] && !this.isAttacking) {
-                this.isAttacking = true;
-                this.attackTimer = 15; // duração do frame de ataque
+            // Lógica de Ataque com Animação
+            if (keys[this.controls.attack] && this.canAttack) {
+                this.performAttack();
             }
 
-            if (this.attackTimer > 0) {
-                this.attackTimer--;
-            } else {
+            // Coletar Armas
+            weapons.forEach((w, index) => {
+                if (this.x < w.x + 20 && this.x + this.size > w.x && this.y < w.y + 20 && this.y + this.size > w.y) {
+                    this.bonusDamage += 10;
+                    document.getElementById(`stat${this.id}`).innerText = `Dano: ${this.baseDamage + this.bonusDamage} (Espada!)`;
+                    weapons.splice(index, 1);
+                }
+            });
+        }
+
+        performAttack() {
+            this.canAttack = false;
+            this.isAttacking = true;
+            this.attackOffset = (this.id === 1) ? 20 : -20; // Pula pra frente
+
+            // Verifica dano no momento do impacto
+            let target = (this.id === 1) ? p2 : p1;
+            if (this.checkHit(target)) {
+                target.hp -= (this.baseDamage + this.bonusDamage);
+                document.getElementById(`hp${target.id}`).style.width = target.hp + "%";
+                // Knockback
+                target.x += (this.id === 1) ? 40 : -40;
+            }
+
+            // Tempo da animação (0.1s)
+            setTimeout(() => {
                 this.isAttacking = false;
-            }
+                this.attackOffset = 0;
+            }, 100);
+
+            // Cooldown do ataque (0.5s) para não spammar
+            setTimeout(() => {
+                this.canAttack = true;
+            }, 500);
+        }
+
+        checkHit(other) {
+            const range = 25; // Alcance extra do golpe
+            return (this.x - range < other.x + other.size &&
+                    this.x + this.size + range > other.x &&
+                    this.y - range < other.y + other.size &&
+                    this.y + this.size + range > other.y);
         }
     }
 
-    const p1 = new Player(100, 180, "#3498db", {
-        up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD", attack: "KeyC"
-    });
-
-    const p2 = new Player(660, 180, "#e74c3c", {
-        up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", attack: "Space"
-    });
-
-    function checkCollision(attacker, defender, hpElement) {
-        if (attacker.isAttacking) {
-            // Verifica se os quadrados se sobrepõem
-            if (attacker.x < defender.x + defender.size &&
-                attacker.x + attacker.size > defender.x &&
-                attacker.y < defender.y + defender.size &&
-                attacker.y + attacker.size > defender.y) {
-                
-                defender.hp -= 1; // Tira vida por frame de contato
-                hpElement.style.width = defender.hp + "%";
-                
-                // Empurrão (Knockback)
-                if (attacker.x < defender.x) defender.x += 10; else defender.x -= 10;
-            }
-        }
-    }
-
-    function loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (p1.hp > 0 && p2.hp > 0) {
-            p1.update();
-            p2.update();
-
-            checkCollision(p1, p2, document.getElementById("hp2"));
-            checkCollision(p2, p1, document.getElementById("hp1"));
-
-            p1.draw();
-            p2.draw();
-
-            requestAnimationFrame(loop);
-        } else {
-            ctx.fillStyle = "white";
-            ctx.font = "40px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("FIM DE JOGO!", canvas.width / 2, canvas.height / 2);
-            ctx.font = "20px Arial";
-            ctx.fillText("Pressione F5 para reiniciar", canvas.width / 2, canvas.height / 2 + 40);
-        }
-    }
-
-    loop();
-</script>
-</body>
-</html>
+    const p1 = new Player(100, 180, "#3498db", { up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD", attack: "KeyC" }, 1);
+    const p2 = new Player(660, 180, "#e74c3c", { up: "ArrowUp", down: "ArrowDown", left
