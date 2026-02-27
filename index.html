@@ -3,280 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL // 1000xRESIST</title>
+    <title>Dino Game - Clone</title>
     <style>
-        :root {
-            --allmother-red: #bb0a11;
-            --void-black: #050505;
-            --data-white: #e5e5e5;
-            --ui-gray: #1a1a1a;
-            --glitch-speed: 0.3s;
-        }
-
-        * { box-sizing: border-box; }
-
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--void-black);
-            color: var(--data-white);
-            font-family: 'Courier New', Courier, monospace; /* Estilo terminal */
-            overflow-x: hidden;
-        }
-
-        /* Efeito de Scanline (Linhas de TV antiga) */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 999;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        header {
-            border-bottom: 2px solid var(--allmother-red);
-            padding: 2rem;
-            text-align: center;
-            background: linear-gradient(to bottom, #110000, var(--void-black));
-        }
-
-        .logo-text {
-            font-size: 3.5rem;
-            font-weight: 900;
-            color: var(--allmother-red);
-            text-transform: uppercase;
-            letter-spacing: -2px;
-            margin: 0;
-            text-shadow: 3px 3px 0px rgba(255,255,255,0.1);
-        }
-
-        nav {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-            border-top: 1px solid #333;
-            padding-top: 15px;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+            font-family: 'Courier New', Courier, monospace;
         }
 
-        nav a {
-            color: var(--data-white);
-            text-decoration: none;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        nav a:hover { color: var(--allmother-red); }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        /* Seções de Conteúdo */
-        section {
-            margin-bottom: 80px;
-            border-left: 1px solid #222;
-            padding-left: 30px;
-        }
-
-        h2 {
-            font-size: 2rem;
-            color: var(--allmother-red);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--allmother-red);
-            display: inline-block;
-            margin-bottom: 30px;
-        }
-
-        .highlight-box {
-            background-color: var(--ui-gray);
-            border: 1px solid #333;
-            padding: 25px;
-            margin: 20px 0;
+        #game-container {
+            width: 600px;
+            height: 200px;
+            border-bottom: 2px solid #535353;
+            background-color: white;
             position: relative;
+            overflow: hidden;
         }
 
-        .highlight-box::after {
-            content: "ID_MEMÓRIA: 1000x";
+        #dino {
+            width: 40px;
+            height: 40px;
+            background-color: #535353;
             position: absolute;
-            top: -10px;
-            right: 10px;
-            background: var(--allmother-red);
-            font-size: 0.6rem;
-            padding: 2px 8px;
+            bottom: 0;
+            left: 50px;
         }
 
-        /* Grid de Personagens/Sisters */
-        .sisters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+        .cactus {
+            width: 20px;
+            height: 40px;
+            background-color: #ff4d4d;
+            position: absolute;
+            bottom: 0;
+            right: -20px;
         }
 
-        .sister-card {
-            border: 1px solid #333;
-            padding: 20px;
-            transition: 0.3s;
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #535353;
+            font-size: 20px;
         }
 
-        .sister-card:hover {
-            background-color: var(--allmother-red);
-            color: white;
+        .animate-jump {
+            animation: jump 0.5s linear;
         }
 
-        .sister-card h3 {
-            margin-top: 0;
-            text-transform: uppercase;
+        @keyframes jump {
+            0% { bottom: 0; }
+            30% { bottom: 100px; }
+            70% { bottom: 100px; }
+            100% { bottom: 0; }
         }
-
-        /* Tabela de Lore */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 15px;
-            border: 1px solid #222;
-        }
-
-        th {
-            background-color: #111;
-            color: var(--allmother-red);
-            text-transform: uppercase;
-            font-size: 0.7rem;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 60px;
-            font-size: 0.7rem;
-            color: #444;
-            border-top: 1px solid #222;
-        }
-
-        /* Estilo de Botão Retro */
-        .btn {
-            display: inline-block;
-            padding: 10px 25px;
-            background: transparent;
-            color: var(--allmother-red);
-            border: 1px solid var(--allmother-red);
-            text-decoration: none;
-            text-transform: uppercase;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            background: var(--allmother-red);
-            color: white;
-            box-shadow: 0 0 15px var(--allmother-red);
-        }
-
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 class="logo-text">1000xRESIST</h1>
-        <nav>
-            <a href="#arquivo">Arquivo</a>
-            <a href="#sisters">As Irmãs</a>
-            <a href="#timeline">Linha do Tempo</a>
-            <a href="#status">Status do Sistema</a>
-        </nav>
-    </header>
-
-    <div class="container">
-        
-        <section id="arquivo">
-            <h2>O Arquivo // Sobre</h2>
-            <div class="highlight-box">
-                <p><strong>1000xRESIST</strong> é um thriller de ficção científica ambientado em um futuro onde a humanidade foi dizimada por uma praga alienígena trazida pelos "Occupants". O jogador assume o papel de <strong>Watcher</strong>, uma clone encarregada de revisitar as memórias da <strong>Allmother</strong> — a única humana que sobreviveu e se tornou uma divindade para suas descendentes.</p>
-                <p>O jogo foca na exploração de traumas geracionais, identidade e as mentiras que sustentam sociedades teocráticas.</p>
-            </div>
-        </section>
-
-        <section id="sisters">
-            <h2>Funções das Irmãs (Sisters)</h2>
-            <p>Cada irmã na "Orchard" possui uma função vital para a sobrevivência do coletivo:</p>
-            <div class="sisters-grid">
-                <div class="sister-card">
-                    <h3>Watcher</h3>
-                    <p>Responsável por utilizar o sistema "Communion" para observar o passado da Allmother.</p>
-                </div>
-                <div class="sister-card">
-                    <h3>Healer</h3>
-                    <p>Cuida da integridade física e genética das clones para evitar a degradação.</p>
-                </div>
-                <div class="sister-card">
-                    <h3>Principal</h3>
-                    <p>A líder administrativa e autoridade máxima abaixo da Allmother.</p>
-                </div>
-                <div class="sister-card">
-                    <h3>Bang Bang</h3>
-                    <p>A unidade militar e de defesa contra ameaças externas e dissidência interna.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="timeline">
-            <h2>Linha do Tempo Registrada</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Era</th>
-                        <th>Evento Crítico</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Ano 0</td>
-                        <td>Chegada dos Occupants e queda da civilização humana.</td>
-                        <td>[CATÁSTROFE]</td>
-                    </tr>
-                    <tr>
-                        <td>Ano 100+</td>
-                        <td>Iris (Allmother) funda a Orchard sob a terra.</td>
-                        <td>[FUNDAÇÃO]</td>
-                    </tr>
-                    <tr>
-                        <td>Ano 1000</td>
-                        <td>A Grande Comunhão e o despertar de Watcher.</td>
-                        <td>[ATUAL]</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section>
-            <h2>Mecânicas de Dados</h2>
-            <ul>
-                <li><strong>Communion:</strong> Salte entre diferentes momentos da vida de Iris para encontrar inconsistências históricas.</li>
-                <li><strong>Narrativa Não-Linear:</strong> Suas descobertas no passado alteram a percepção do presente.</li>
-                <li><strong>Exploração de Hub:</strong> Interaja com outras irmãs para descobrir segredos da Orchard.</li>
-            </ul>
-            <br>
-            <a href="#" class="btn">Acessar Protocolo Completo</a>
-        </section>
-
+    <div id="game-container">
+        <div id="score">0</div>
+        <div id="dino"></div>
     </div>
 
-    <div class="footer">
-        <p>CONEXÃO ESTABELECIDA // TERMINAL_SISTER_UNIT_771</p>
-        <p>1000xRESIST é uma propriedade de sunset visitor 🖲️. Site desenvolvido com fins informativos.</p>
-    </div>
+    <script>
+        const dino = document.getElementById("dino");
+        const container = document.getElementById("game-container");
+        const scoreElement = document.getElementById("score");
+        let score = 0;
+        let isGameOver = false;
 
+        // Função para o Dino pular
+        function jump() {
+            if (!dino.classList.contains("animate-jump")) {
+                dino.classList.add("animate-jump");
+                setTimeout(() => {
+                    dino.classList.remove("animate-jump");
+                }, 500);
+            }
+        }
+
+        // Listener para tecla Espaço ou clique
+        document.addEventListener("keydown", (e) => {
+            if (e.code === "Space") jump();
+        });
+
+        // Criar cactos aleatórios
+        function createCactus() {
+            if (isGameOver) return;
+
+            const cactus = document.createElement("div");
+            cactus.classList.add("cactus");
+            container.appendChild(cactus);
+
+            let cactusPos = 600;
+            
+            let moveInterval = setInterval(() => {
+                if (isGameOver) {
+                    clearInterval(moveInterval);
+                    return;
+                }
+
+                cactusPos -= 5;
+                cactus.style.left = cactusPos + "px";
+
+                // Detecção de Colisão
+                let dinoBottom = parseInt(window.getComputedStyle(dino).getPropertyValue("bottom"));
+                
+                if (cactusPos > 50 && cactusPos < 90 && dinoBottom <= 40) {
+                    gameOver();
+                    clearInterval(moveInterval);
+                }
+
+                // Remove cacto quando sai da tela e soma pontuação
+                if (cactusPos < -20) {
+                    clearInterval(moveInterval);
+                    container.removeChild(cactus);
+                    score++;
+                    scoreElement.innerText = score;
+                }
+            }, 20);
+
+            // Gera o próximo cacto em tempo aleatório
+            let randomTime = Math.random() * (2000 - 700) + 700;
+            setTimeout(createCactus, randomTime);
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            alert("Game Over! Pontuação: " + score);
+            location.reload(); // Recarrega a página para reiniciar
+        }
+
+        createCactus();
+    </script>
 </body>
 </html>
